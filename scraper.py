@@ -6,95 +6,90 @@ Created on Fri Mar  3 00:19:53 2023
 @author: thomasrael
 """
 
-from bs4 import BeautifulSoup
-import xlsxwriter
-
+import requests
+from datetime import datetime
+from datetime import timedelta
+import csv
 
 
 print("––––––––––––––––––––––")
 
+# W  = []
+# E  = []
+# C  = []
+# SE = []
+# NE = []
+# MS = []
 
 
-W = []
-E = []
-C = []
-SE = []
-NE = []
-MS = []
-months = ["01","02","03","04","05","06","07","08","09","10","11","12"]
-years = ["2020","2021","2022","2023"]
+date = "2020-10-24" 
 
-DIC = {}
-
-for y in years:
-    for m in months:
-        for d1 in range(4):
-            for d10 in range(10):
-                date = str(y + "-" + m + "-" + str(d1) + str(d10))
-                L = [0,0,0,0,0,0]
-                try: ## change directory access manually V  change yearly input manually V
-                    with open("/Users/thomasrael/Desktop/piq/school/2022/UROP/filings/weekly/filings-week-ending-" + date + ".html") as fp:
-                        soup = BeautifulSoup(fp)
-                        souplist = str(soup).split()
-                    
-                        for i in range(len(souplist)):
-                            try: 
-                                if souplist[i] == "eastern" and souplist[i+1] != "hampshire":  
-                                    # print("Eastern:" + souplist[i+1])
-                                    L[4] = souplist[i+1] 
-                                    E.append(souplist[i+1]) 
-                                if souplist[i] == "northeast":
-                                    # print("Northeast:" + souplist[i+1])
-                                    L[1] = souplist[i+1]
-                                    NE.append(souplist[i+1]) 
-                                if souplist[i] == "western":
-                                    # print("Western:" + souplist[i+1])
-                                    L[3] = souplist[i+1]
-                                    W.append(souplist[i+1]) 
-                                if souplist[i] == "central" and souplist [i-1] != "bmc":  
-                                    # print("Central:" + souplist[i+1])
-                                    L[0] = souplist[i+1]
-                                    C.append(souplist[i+1]) 
-                                if souplist[i] == "southeast":                  
-                                    # print("Southeast:" + souplist[i+1])
-                                    L[2] = souplist[i+1]
-                                    SE.append(souplist[i+1]) 
-                                if souplist[i] == "metro_south":
-                                    # print("Metro South:" + souplist[i+1])
-                                    L[5] = souplist[i+1]
-                                    MS.append(souplist[i+1]) 
-                            except:
-                                continue
-                        DIC[date] = L 
-                except:
-                    continue
-            # print (date)
-# print ("C:" + str(C))
-# print("––––––––––––––––––––––")
-# print ("NE:" + str(NE))
-# print("––––––––––––––––––––––")
-# print ("SE:" + str(SE))
-# print("––––––––––––––––––––––")
-# print ("W:" + str(W))
-# print("––––––––––––––––––––––")
-# print ("E:" + str(E))
-# print("––––––––––––––––––––––")
-# print ("MS:" +  str(MS))
-# print("––––––––––––––––––––––")
-print (DIC)
-# print (len(DIC))
-
-"/Users/thomasrael/Desktop/piq/school/2022/UROP/"
+url = (requests.get("https://masslandlords.net/policy/eviction-data/filings-week-ending-" + date)).text
+urllist = url.split()
 
 
-workbook = xlsxwriter.Workbook("weekly-filings.xlsx")
-worksheet = workbook.add_worksheet("FILINGS")
+DIC = {} ##key: date, value: [date, central, noreast,soueast,western,eastern,msouth]
+j = 0
+while j < 130: ### until when??
+    
+    
+    url = (requests.get("https://masslandlords.net/policy/eviction-data/filings-week-ending-" + date)).text
+    urllist = url.split()
+    L = [date,0,0,0,0,0,0] 
+    for i in range(len(urllist)): 
+        if urllist[i] == "metro_south":
+            # print("Metro South:" + urllist[i+1]) 
+            L[6] = urllist[i+1]
+            # MS.append(urllist[i+1])  
+        if urllist[i] == "eastern" and urllist[i+1] != "hampshire":  
+            # print("Eastern:" + urllist[i+1])
+            L[5] = urllist[i+1] 
+            # E.append(urllist[i+1]) 
+        if urllist[i] == "western":
+            # print("Western:" + urllist[i+1])
+            L[4] = urllist[i+1]
+            # W.append(urllist[i+1]) 
+        if urllist[i] == "southeast":                  
+            # print("Southeast:" + urllist[i+1])
+            L[3] = urllist[i+1]
+            # SE.append(urllist[i+1]) 
+        if urllist[i] == "northeast":
+            # print("Northeast:" + urllist[i+1])
+            L[2] = urllist[i+1]
+            # NE.append(urllist[i+1]) 
+        if urllist[i] == "central" and urllist [i-1] != "bmc":  
+            # print("Central:" + urllist[i+1])
+            L[1] = urllist[i+1]
+            # C.append(urllist[i+1]) 
+        
+        DIC[date] = L
+        
+    date = datetime.strptime(date, "%Y-%m-%d")  #turn date string into date format  
+    date += timedelta(days=7) # forward 1 week (next wecord)
+    date = datetime.strftime(date, "%Y-%m-%d")  #turn date format back into date string to affix to URL
+        
+    j += 1 #counter
+# print (DIC)
 
-for i in range(len(DIC.keys())):
-    worksheet.write(i+1,0,list(DIC.keys())[i])
-    for j in range(6):
-        worksheet.write(i+1,j+1,DIC[list(DIC.keys())[i]][j])
+fields = ["DATE", "Central", "Northeast", "Southeast", "Western", "Eastern", "Metro-South"] 
+    
+# data rows of csv file 
+rows = list(DIC.values())
+    
+# name of csv file 
+filename = "weekly-filings-cambridge.csv"
+    
+# writing to csv file 
+with open(filename, "w") as csvfile: 
+    # creating a csv writer object 
+    csvwriter = csv.writer(csvfile) 
+        
+    # writing the fields 
+    csvwriter.writerow(fields) 
+        
+    # writing the data rows 
+    csvwriter.writerows(rows)
 
-workbook.close()
+
 
 
