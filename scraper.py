@@ -1,39 +1,64 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# from bs4 import BeautifulSoup
 import requests
-import datetime
+from datetime import datetime
+from datetime import timedelta
+from time import sleep
 
 
-START_DATE = "2020-10-24" 
-page_content = requests.get("https://masslandlords.net/policy/eviction-data/filings-week-ending-" + START_DATE).text.split()
+START_DATE = datetime.strptime("2020-10-24", "%Y-%m-%d")
+URL_BASE = "https://masslandlords.net/policy/eviction-data/filings-week-ending-"
+RESULTS_DICT = {} ##key: date, value: evictions
 
-RESULTS_DICT = {}
+def create_weeks_list(start_date, end_date = False):
+    """
+    Create a list of week starts between a start and end date.
+    """
+    if not end_date:
+        end_date = datetime.today()
+    date_list = []
+    weekly = start_date
+    while weekly <= end_date:
+        date_list.append(weekly.strftime("%Y-%m-%d"))
+        weekly += timedelta(days=7)
+    return date_list
 
-L = {
-    "W": 0,
-    "E": 0,
-    "C": 0,
-    "SE": 0,
-    "NE": 0,
-    "MS": 0
-}
+def parse_page(page_request):
+    """
+    Parses requested page.
+    """
+    results = {
+        "W": 0,
+        "E": 0,
+        "C": 0,
+        "SE": 0,
+        "NE": 0,
+        "MS": 0
+    }
+    page = page_request.text.split()
+    for i in range(len(page)): 
+        if page[i] == "metro_south":
+            results["MS"] = page[i+1] 
+        if page[i] == "eastern" and page[i+1] != "hampshire":
+            results["E"] = page[i+1] 
+        if page[i] == "western":
+            results["W"] = page[i+1]
+        if page[i] == "southeast":
+            results["SE"] = page[i+1]
+        if page[i] == "northeast":
+            results["NE"] = page[i+1]
+        if page[i] == "central" and page [i-1] != "bmc":
+            results["MS"] = page[i+1]
+    return results
 
-for i in range(len(page_content)): 
-    if page_content[i] == "metro_south":
-        L["MS"] = page_content[i+1] 
-    if page_content[i] == "eastern" and page_content[i+1] != "hampshire":
-        L["E"] = page_content[i+1] 
-    if page_content[i] == "western":
-        L["W"] = page_content[i+1]
-    if page_content[i] == "southeast":
-        L["SE"] = page_content[i+1]
-    if page_content[i] == "northeast":
-        L["NE"] = page_content[i+1]
-    if page_content[i] == "central" and page_content [i-1] != "bmc":
-        L["MS"] = page_content[i+1]
+for date in create_weeks_list(START_DATE):
+    request = requests.get(URL_BASE + date)
+    if request.status_code == 404:
+        print(f"No data available for {date}.")
+        continue
+    else:
+        RESULTS_DICT[date] = parse_page(request)
+    sleep(1.5)
     
-    RESULTS_DICT[START_DATE] = L
 
-print (RESULTS_DICT)
