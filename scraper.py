@@ -22,7 +22,6 @@ def create_weeks_list(start_date, end_date = False):
     date_list = []
     weekly = start_date
     while weekly <= end_date:
-        print("he")
         date_list.append(weekly.strftime("%Y-%m-%d"))
         weekly += timedelta(days=7)
     return date_list
@@ -56,7 +55,6 @@ def parse_page(page_request):
     return results
 
 def run():
-    print(create_weeks_list(START_DATE))
     for date in create_weeks_list(START_DATE):
         request = get(URL_BASE + date)
         print(f"Attempting to download {date}.")
