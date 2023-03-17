@@ -35,12 +35,12 @@ ORDER BY week_start, week_end;
 SELECT 
 	week_start,
 	week_end,
-	COALESCE(max(n) FILTER (WHERE district = 'central'), 0) AS C_db_noad,
-	COALESCE(max(n) FILTER (WHERE district = 'eastern'), 0) AS E_db_noad,
-	COALESCE(max(n) FILTER (WHERE district = 'metrosouth'), 0) AS MS_db_noad,
-	COALESCE(max(n) FILTER (WHERE district = 'northeast'), 0) AS NE_db_noad,
-	COALESCE(max(n) FILTER (WHERE district = 'southeast'), 0) AS SE_db_noad,
-	COALESCE(max(n) FILTER (WHERE district = 'western'), 0) AS W_db_noad
+	COALESCE(max(n) FILTER (WHERE district = 'central'), 0) AS C_db_add,
+	COALESCE(max(n) FILTER (WHERE district = 'eastern'), 0) AS E_db_add,
+	COALESCE(max(n) FILTER (WHERE district = 'metrosouth'), 0) AS MS_db_add,
+	COALESCE(max(n) FILTER (WHERE district = 'northeast'), 0) AS NE_db_add,
+	COALESCE(max(n) FILTER (WHERE district = 'southeast'), 0) AS SE_db_add,
+	COALESCE(max(n) FILTER (WHERE district = 'western'), 0) AS W_db_add
 FROM (
 	-- This inner query groups filings by week.
 	SELECT 
